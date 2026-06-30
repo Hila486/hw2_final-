@@ -1,0 +1,11 @@
+# Sample simulation configuration for testing
+# All distances in centimeters, angles in degrees
+
+simulation_config:
+  map_filename: data_maps/benchmark_map_binary.npy
+  map_resolution_cm: 10
+  initial_drone_position:
+    x_cm: 225
+    y_cm: 225
+    height_cm: 05
+  initial_angle_deg: 0

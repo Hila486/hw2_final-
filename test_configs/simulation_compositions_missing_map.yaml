@@ -1,0 +1,11 @@
+simulation_compositions:
+  simulations:
+    - simulation_config: test_configs/simulation_config_missing_map.yaml
+      mission_configs:
+        - test_configs/mission_config.yaml
+
+  drone_configs:
+    - test_configs/drone_config.yaml
+
+  lidar_configs:
+    - test_configs/lidar_config.yaml

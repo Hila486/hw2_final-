@@ -1,0 +1,42 @@
+Bonus Feature:
+
+--------------------------------------------------
+Visual Simulation
+--------------------------------------------------
+
+We added an optional external visual simulation tool for the Drone Mapper project.
+
+The visualization is implemented as a Python script:
+
+    tools/visualize_drone_path.py
+
+After the main C++ simulator runs, the visualizer reads the generated simulation files and creates an interactive 3D HTML visualization of the drone route inside the map.
+
+The visualization shows:
+- occupied cells from map_input.txt
+- the drone route after the simulation run
+- the start position
+- the final drone position
+- the final drone direction
+- lidar max-range center lines for scan events
+
+Files:
+    tools/visualize_drone_path.py
+    drone_path_visualization.html
+
+--------------------------------------------------
+How to Check
+--------------------------------------------------
+
+1. Run the visualization script after running the project (drone_mapper):
+
+    python3 ./tools/visualize_drone_path.py
+
+2. The script should create the file:
+
+    drone_path_visualization.html
+
+3. Open drone_path_visualization.html in.
+
+Expected result:
+Should show an interactive 3D visualization of the map and the drone route.

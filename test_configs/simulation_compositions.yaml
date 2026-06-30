@@ -1,0 +1,18 @@
+# Sample simulation composition configuration for testing
+# This defines which configurations to use together
+
+simulation_compositions:
+  simulations:
+    - simulation_config: test_configs/simulation_config.yaml
+      mission_configs:
+        - test_configs/mission_config.yaml
+
+    - simulation_config: test_configs/simulation_config.yaml
+      mission_configs:
+        - test_configs/mission_config.yaml
+
+  drone_configs:
+    - test_configs/drone_config.yaml
+    
+  lidar_configs:
+    - test_configs/lidar_config.yaml

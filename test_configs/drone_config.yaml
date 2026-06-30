@@ -1,0 +1,8 @@
+# Sample drone configuration for testing
+# All distances in centimeters, angles in degrees
+
+drone_config:
+  dimensions_cm: 10
+  max_rotate_deg: 45.0
+  max_advance_cm: 100.0
+  max_elevate_cm: 200.0

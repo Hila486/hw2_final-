@@ -1,0 +1,27 @@
+# Build outputs
+build/
+build-asan/
+cmake-build-*/
+out/
+
+# Run outputs
+run_output/
+run_output_asan/
+run_output_gdb/
+output_results/
+simulation_output.yaml
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.log
+
+# CMake generated
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
