@@ -72,6 +72,7 @@ add_executable(drone_mapper_simulation_test
     tests/components/MockLidarTests.cpp
     tests/components/MapsComparisonTests.cpp
     tests/integration/IntegrationTests.cpp
+    tests/components/ConfigParserTests.cpp
 )
 target_include_directories(drone_mapper_simulation_test
     PRIVATE

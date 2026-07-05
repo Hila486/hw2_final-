@@ -202,8 +202,10 @@ ConfigParser::parseSimulationConfig(const std::filesystem::path& filepath) {
             requireValue<double>(config, "map_resolution_cm", context) * cm,
             parseMapOffset(config["map_axes_offset"]),
             parsePosition(position, context + ".initial_drone_position"),
-            requireValue<double>(config, "initial_angle_deg", context) *
-                horizontal_angle[deg],
+            /*requireValue<double>(config, "initial_angle_deg", context) *
+                horizontal_angle[deg],*/
+            optionalValue<double>(config, "initial_angle_deg", 0.0) *
+            horizontal_angle[deg],
         };
     } catch (const std::exception& exception) {
         throw wrapParseError(filepath, exception);
