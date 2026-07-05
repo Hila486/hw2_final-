@@ -93,12 +93,28 @@ SimulationRunFactoryImpl::create(const types::SimulationConfigData& simulation,
     auto hidden_map_array = loadNormalizedNpyMap(simulation.map_filename);
     validateInputMapValues(*hidden_map_array, simulation.map_filename);
     const NpyMapShape map_shape = npyMapShape(*hidden_map_array, simulation.map_filename);
-    const types::MapConfig map_config = mapConfigForShape(map_shape, simulation);
+    
+    /*const types::MapConfig map_config = mapConfigForShape(map_shape, simulation);
     auto hidden_map = std::make_unique<Map3DImpl>(hidden_map_array, map_config);
 
     auto output_map = std::make_unique<Map3DImpl>(
         makeFilledIntNpyArray(map_shape, static_cast<int>(types::VoxelOccupancy::Unmapped)),
-        map_config);
+        map_config);*/
+
+
+    const types::MapConfig map_config = mapConfigForShape(map_shape, simulation);
+    auto hidden_map = std::make_unique<Map3DImpl>(hidden_map_array, map_config);
+
+    // Hidden map uses the full physical map.
+    // Output map uses the mission boundaries, because only the mission area is scored/mapped.
+    types::MapConfig output_map_config = map_config;
+    output_map_config.boundaries = mission.mission_bounds;
+
+    auto output_map = std::make_unique<Map3DImpl>(
+        makeFilledIntNpyArray(map_shape, static_cast<int>(types::VoxelOccupancy::Unmapped)),
+        output_map_config);
+
+
 
     auto gps = std::make_unique<MockGPS>(
         simulation.initial_drone_position,

@@ -59,8 +59,15 @@ TEST(Integration, FullPipelineWithRealAlgorithmProducesScoredOutputMap) {
 
     types::SimulationCompositionData composition;
     composition.composition_file = "integration.yaml";
+
+    /*composition.simulation_mission_groups.emplace_back(
+        simulation, std::vector<types::MissionConfigData>{makeMission(/*max_steps=500)});*/
+
+    auto mission = makeMission(/*max_steps=*/500);
+    mission.mission_bounds = fullConfig(1, 3, 3, 10.0).boundaries;
+
     composition.simulation_mission_groups.emplace_back(
-        simulation, std::vector<types::MissionConfigData>{makeMission(/*max_steps=*/500)});
+        simulation, std::vector<types::MissionConfigData>{mission});
     composition.drones = {makeDrone(/*radius=*/1, 90, 10, 10)};
     composition.lidars = {makeLidar(20.0, 120.0, 2.5, /*fov_circles=*/3)};
 
