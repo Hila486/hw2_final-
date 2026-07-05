@@ -11,6 +11,10 @@
 namespace drone_mapper {
 namespace {
 
+using test::X;
+using test::Y;
+using test::Z;
+
 using test::fullConfig;
 using test::makeMapArray;
 using test::setVoxelRaw;
@@ -117,6 +121,185 @@ TEST(MapsComparison, ReturnsOneScorePerTarget) {
     ASSERT_EQ(scores.size(), 2u);
     EXPECT_DOUBLE_EQ(scores[0], 100.0);
     EXPECT_NEAR(scores[1], 50.0, 1.0e-6);
+}
+
+//------------------------------------------------------------------------------------------
+// tests for fixing - 1. Fix: the scoring is not being done relative to the mission bounderies.
+
+TEST(MapsComparison, ScoresOnlyOverlapWithTargetMissionBoundaries) {
+    constexpr std::size_t depth = 1;
+    constexpr std::size_t height = 4;
+    constexpr std::size_t width = 4;
+    constexpr double res = 10.0;
+
+    // Origin is mostly Occupied.
+    auto origin_array = makeMapArray(depth, height, width, 1);
+
+    // But the mission area, the center 2x2 cells, is Empty.
+    setVoxelRaw(*origin_array, height, width, 0, 1, 1, 0);
+    setVoxelRaw(*origin_array, height, width, 0, 1, 2, 0);
+    setVoxelRaw(*origin_array, height, width, 0, 2, 1, 0);
+    setVoxelRaw(*origin_array, height, width, 0, 2, 2, 0);
+
+    // Target is all Empty.
+    // It is correct inside the mission area, but wrong outside it.
+    auto target_array = makeMapArray(depth, height, width, 0);
+
+    const types::MapConfig origin_config = fullConfig(depth, height, width, res);
+
+    types::MapConfig target_config = origin_config;
+    target_config.boundaries.min_x = X(10.0);
+    target_config.boundaries.max_x = X(30.0);
+    target_config.boundaries.min_y = Y(10.0);
+    target_config.boundaries.max_y = Y(30.0);
+    target_config.boundaries.min_height = Z(0.0);
+    target_config.boundaries.max_height = Z(10.0);
+
+    Map3DImpl origin(std::move(origin_array), origin_config);
+    Map3DImpl target(std::move(target_array), target_config);
+
+    const std::vector<IMap3D*> targets{&target};
+    const std::vector<double> scores = MapsComparison::compare(origin, targets);
+
+    ASSERT_EQ(scores.size(), 1u);
+
+    // Correct behavior:
+    // only the center 2x2 mission area is scored, and it matches perfectly.
+    //
+    // Broken behavior:
+    // the whole 4x4 map is scored, and the score would be much lower.
+    EXPECT_DOUBLE_EQ(scores.front(), 100.0);
+}
+
+TEST(MapsComparison, DifferenceInsideMissionBoundaryLowersScore) {
+    constexpr std::size_t depth = 1;
+    constexpr std::size_t height = 4;
+    constexpr std::size_t width = 4;
+    constexpr double res = 10.0;
+
+    auto origin_array = makeMapArray(depth, height, width, 0);
+    auto target_array = makeMapArray(depth, height, width, 0);
+
+    // One wrong voxel inside the mission area.
+    setVoxelRaw(*target_array, height, width, 0, 1, 1, 1);
+
+    const types::MapConfig origin_config = fullConfig(depth, height, width, res);
+
+    types::MapConfig target_config = origin_config;
+    target_config.boundaries.min_x = X(10.0);
+    target_config.boundaries.max_x = X(30.0);
+    target_config.boundaries.min_y = Y(10.0);
+    target_config.boundaries.max_y = Y(30.0);
+    target_config.boundaries.min_height = Z(0.0);
+    target_config.boundaries.max_height = Z(10.0);
+
+    Map3DImpl origin(std::move(origin_array), origin_config);
+    Map3DImpl target(std::move(target_array), target_config);
+
+    const std::vector<IMap3D*> targets{&target};
+    const std::vector<double> scores = MapsComparison::compare(origin, targets);
+
+    ASSERT_EQ(scores.size(), 1u);
+
+    EXPECT_LT(scores.front(), 100.0);
+    EXPECT_GT(scores.front(), 0.0);
+}
+
+
+TEST(MapsComparison, DifferenceOutsideMissionBoundaryDoesNotLowerScore) {
+    constexpr std::size_t depth = 1;
+    constexpr std::size_t height = 4;
+    constexpr std::size_t width = 4;
+    constexpr double res = 10.0;
+
+    auto origin_array = makeMapArray(depth, height, width, 0);
+    auto target_array = makeMapArray(depth, height, width, 0);
+
+    // Wrong voxels outside the mission area.
+    setVoxelRaw(*target_array, height, width, 0, 0, 0, 1);
+    setVoxelRaw(*target_array, height, width, 0, 0, 3, 1);
+    setVoxelRaw(*target_array, height, width, 0, 3, 0, 1);
+    setVoxelRaw(*target_array, height, width, 0, 3, 3, 1);
+
+    const types::MapConfig origin_config = fullConfig(depth, height, width, res);
+
+    types::MapConfig target_config = origin_config;
+    target_config.boundaries.min_x = X(10.0);
+    target_config.boundaries.max_x = X(30.0);
+    target_config.boundaries.min_y = Y(10.0);
+    target_config.boundaries.max_y = Y(30.0);
+    target_config.boundaries.min_height = Z(0.0);
+    target_config.boundaries.max_height = Z(10.0);
+
+    Map3DImpl origin(std::move(origin_array), origin_config);
+    Map3DImpl target(std::move(target_array), target_config);
+
+    const std::vector<IMap3D*> targets{&target};
+    const std::vector<double> scores = MapsComparison::compare(origin, targets);
+
+    ASSERT_EQ(scores.size(), 1u);
+
+    EXPECT_DOUBLE_EQ(scores.front(), 100.0);
+}
+
+
+TEST(MapsComparison, WithoutNarrowMissionBoundariesScoresWholeMap) {
+    constexpr std::size_t depth = 1;
+    constexpr std::size_t height = 4;
+    constexpr std::size_t width = 4;
+    constexpr double res = 10.0;
+
+    auto origin_array = makeMapArray(depth, height, width, 0);
+    auto target_array = makeMapArray(depth, height, width, 0);
+
+    // One wrong voxel in the corner.
+    // Since both maps use the full default config, this SHOULD hurt the score.
+    setVoxelRaw(*target_array, height, width, 0, 0, 0, 1);
+
+    const types::MapConfig config = fullConfig(depth, height, width, res);
+
+    Map3DImpl origin(std::move(origin_array), config);
+    Map3DImpl target(std::move(target_array), config);
+
+    const std::vector<IMap3D*> targets{&target};
+    const std::vector<double> scores = MapsComparison::compare(origin, targets);
+
+    ASSERT_EQ(scores.size(), 1u);
+
+    EXPECT_LT(scores.front(), 100.0);
+    EXPECT_GT(scores.front(), 0.0);
+}
+
+TEST(MapsComparison, SameNarrowBoundariesScoreOnlyThatSharedArea) {
+    constexpr std::size_t depth = 1;
+    constexpr std::size_t height = 4;
+    constexpr std::size_t width = 4;
+    constexpr double res = 10.0;
+
+    auto origin_array = makeMapArray(depth, height, width, 0);
+    auto target_array = makeMapArray(depth, height, width, 0);
+
+    // Differences outside the shared narrow area.
+    setVoxelRaw(*origin_array, height, width, 0, 0, 0, 1);
+    setVoxelRaw(*target_array, height, width, 0, 3, 3, 1);
+
+    types::MapConfig config = fullConfig(depth, height, width, res);
+    config.boundaries.min_x = X(10.0);
+    config.boundaries.max_x = X(30.0);
+    config.boundaries.min_y = Y(10.0);
+    config.boundaries.max_y = Y(30.0);
+    config.boundaries.min_height = Z(0.0);
+    config.boundaries.max_height = Z(10.0);
+
+    Map3DImpl origin(std::move(origin_array), config);
+    Map3DImpl target(std::move(target_array), config);
+
+    const std::vector<IMap3D*> targets{&target};
+    const std::vector<double> scores = MapsComparison::compare(origin, targets);
+
+    ASSERT_EQ(scores.size(), 1u);
+
+    EXPECT_DOUBLE_EQ(scores.front(), 100.0);
 }
 
 } // namespace
