@@ -117,5 +117,38 @@ TEST(MockLidar, ObstacleBehindIsNotSeenWhenFacingAway) {
     EXPECT_DOUBLE_EQ(cm_of(result.front().distance), std::numeric_limits<double>::max());
 }
 
+TEST(MockLidar, ObstacleBeyondMaxRangeIsNotDetected) {
+    auto map = makeCorridor(/*occupied_at_index_five=*/true);
+    MockGPS gps(P(5, 5, 5), heading(0), L(kRes));
+
+    // Obstacle is around 45cm away, but z_max is only 30cm.
+    MockLidar lidar(makeLidar(20.0, 30.0, 2.5, 1), *map, gps);
+
+    const types::LidarScanResult result = lidar.scan(heading(0));
+
+    ASSERT_EQ(result.size(), 1u);
+    EXPECT_DOUBLE_EQ(cm_of(result.front().distance), std::numeric_limits<double>::max());
+}
+
+TEST(MockLidar, TooCloseObstacleReportsZeroDistance) {
+    auto array = makeMapArray(kDepth, kHeight, kWidth, 0);
+
+    // Origin is x=5cm. Voxel x=1 starts at x=10cm, so the hit is only ~5cm away,
+    // below z_min=20cm.
+    setVoxelRaw(*array, kHeight, kWidth, /*z=*/0, /*y=*/0, /*x=*/1, 1);
+
+    auto map = std::make_unique<Map3DImpl>(
+        std::move(array),
+        fullConfig(kDepth, kHeight, kWidth, kRes));
+
+    MockGPS gps(P(5, 5, 5), heading(0), L(kRes));
+    MockLidar lidar(makeLidar(20.0, 120.0, 2.5, 1), *map, gps);
+
+    const types::LidarScanResult result = lidar.scan(heading(0));
+
+    ASSERT_EQ(result.size(), 1u);
+    EXPECT_DOUBLE_EQ(cm_of(result.front().distance), 0.0);
+}
+
 } // namespace
 } // namespace drone_mapper

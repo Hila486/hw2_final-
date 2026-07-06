@@ -230,5 +230,50 @@ TEST(SimulationRun, MockMovementRotateChangesHeading) {
     EXPECT_NEAR(gps.heading().horizontal.force_numerical_value_in(deg), 25.0, 1.0e-9);
 }
 
+TEST(SimulationRun, MockMovementRotateRightFromZeroWrapsTo270) {
+    MockGPS gps(P(0, 0, 0), heading(0), L(5));
+    MockMovement movement(gps);
+
+    const types::MovementResult result =
+        movement.rotate(types::RotationDirection::Right, test::Hdeg(90));
+
+    EXPECT_TRUE(static_cast<bool>(result));
+    EXPECT_NEAR(gps.heading().horizontal.force_numerical_value_in(deg), 270.0, 1.0e-9);
+}
+
+TEST(SimulationRun, MockMovementAdvanceAtWrapped270MovesOnlyNegativeY) {
+    MockGPS gps(P(100, 100, 0), heading(0), L(5));
+    MockMovement movement(gps);
+
+    movement.rotate(types::RotationDirection::Right, test::Hdeg(90));
+    movement.advance(L(10));
+
+    EXPECT_NEAR(gps.position().x.force_numerical_value_in(cm), 100.0, 1.0e-9);
+    EXPECT_NEAR(gps.position().y.force_numerical_value_in(cm), 90.0, 1.0e-9);
+    EXPECT_NEAR(gps.position().z.force_numerical_value_in(cm), 0.0, 1.0e-9);
+}
+
+TEST(SimulationRun, MockMovementFourRightTurnsReturnToZeroHeading) {
+    MockGPS gps(P(0, 0, 0), heading(0), L(5));
+    MockMovement movement(gps);
+
+    for (int i = 0; i < 4; ++i) {
+        movement.rotate(types::RotationDirection::Right, test::Hdeg(90));
+    }
+
+    EXPECT_NEAR(gps.heading().horizontal.force_numerical_value_in(deg), 0.0, 1.0e-9);
+}
+
+TEST(SimulationRun, MockMovementAdvanceAtOneEightyMovesOnlyNegativeX) {
+    MockGPS gps(P(100, 100, 0), heading(180), L(5));
+    MockMovement movement(gps);
+
+    movement.advance(L(10));
+
+    EXPECT_NEAR(gps.position().x.force_numerical_value_in(cm), 90.0, 1.0e-9);
+    EXPECT_NEAR(gps.position().y.force_numerical_value_in(cm), 100.0, 1.0e-9);
+    EXPECT_NEAR(gps.position().z.force_numerical_value_in(cm), 0.0, 1.0e-9);
+}
+
 } // namespace
 } // namespace drone_mapper

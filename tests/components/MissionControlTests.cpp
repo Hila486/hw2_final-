@@ -172,5 +172,27 @@ TEST(MissionControl, DroneStepErrorIsReported) {
     EXPECT_EQ(result.errors.front().code, "DRONE_STEP_FAILED");
 }
 
+TEST(MissionControl, ZeroMaxStepsReturnsMaxStepsWithoutStepping) {
+    Maps maps = makeMaps(/*occupied_center=*/false);
+
+    NiceMock<test::MockDroneControl> drone_control;
+    EXPECT_CALL(drone_control, state()).WillRepeatedly(Return(stateAt(50, 50, 50)));
+    EXPECT_CALL(drone_control, step()).Times(0);
+
+    const auto dir = test::makeTempDir("mc_zero_steps");
+    MissionControlImpl mission_control(
+        makeMission(/*max_steps=*/0),
+        makeDrone(5),
+        *maps.hidden,
+        *maps.output,
+        drone_control,
+        dir / "run" / "output_map.npy");
+
+    const types::MissionRunResult result = mission_control.runMission();
+
+    EXPECT_EQ(result.status, types::MissionRunStatus::MaxSteps);
+    EXPECT_EQ(result.steps, 0u);
+}
+
 } // namespace
 } // namespace drone_mapper
