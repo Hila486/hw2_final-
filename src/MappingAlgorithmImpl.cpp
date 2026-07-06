@@ -6,7 +6,6 @@
 #include <array>
 #include <cmath>
 #include <optional>
-#include <iostream>
 
 namespace drone_mapper {
 
@@ -131,23 +130,6 @@ types::MappingStepCommand MappingAlgorithmImpl::nextStep(const types::DroneState
 
     handlePendingTranslationResult(current_cell);
     initializeAtCurrentCell(current_cell, state.position);
-
-    static std::size_t debug_step_counter = 0;
-    ++debug_step_counter;
-    if (debug_step_counter % 1000 == 0) {
-        std::cerr
-            << "[ALG_DEBUG] step=" << debug_step_counter
-            << " cell=(" << current_cell.x << "," << current_cell.y << "," << current_cell.z << ")"
-            << " pos=(" << xCm(state.position.x) << "," << yCm(state.position.y) << "," << zCm(state.position.z) << ")"
-            << " visited=" << visited_cells_.size()
-            << " attempted=" << attempted_cells_.size()
-            << " dfs_path=" << dfs_path_.size()
-            << " failed=" << failed_translation_count_
-            << " next_scan=" << next_scan_index_
-            << " pending_target=" << (pending_target_ ? 1 : 0)
-            << " pending_translation=" << (pending_translation_ ? 1 : 0)
-            << "\n";
-    }
 
     if (failed_translation_count_ >= kMaxFailedTranslations) {
         return finishCommand();
@@ -457,19 +439,6 @@ void MappingAlgorithmImpl::handlePendingTranslationResult(const GridCell& curren
     }
 
     ++failed_translation_count_;
-
-    static std::size_t debug_failed_move_counter = 0;
-    ++debug_failed_move_counter;
-    if (debug_failed_move_counter <= 20 || debug_failed_move_counter % 100 == 0) {
-        std::cerr
-            << "[ALG_FAIL] count=" << debug_failed_move_counter
-            << " current=(" << current_cell.x << "," << current_cell.y << "," << current_cell.z << ")"
-            << " target=(" << completed_target.node.cell.x << "," << completed_target.node.cell.y << "," << completed_target.node.cell.z << ")"
-            << " backtracking=" << (completed_target.backtracking ? 1 : 0)
-            << " vertical=" << (completed_target.vertical ? 1 : 0)
-            << " failed_streak=" << failed_translation_count_
-            << "\n";
-    }
 
     attempted_cells_.insert(completed_target.node.cell);
     pending_target_.reset();

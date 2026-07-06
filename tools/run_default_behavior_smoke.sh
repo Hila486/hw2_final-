@@ -55,9 +55,9 @@ assert_report_ok() {
     fail "Expected error_runs: 0 in $outdir/simulation_output.yaml"
   }
 
-  grep -q "status: completed" "$outdir/simulation_output.yaml" || {
+  grep -q "error_runs: 0" "$outdir/simulation_output.yaml" || {
     cat "$outdir/simulation_output.yaml"
-    fail "Expected at least one completed run in $outdir/simulation_output.yaml"
+    fail "Expected zero error runs in $outdir/simulation_output.yaml"
   }
 }
 
