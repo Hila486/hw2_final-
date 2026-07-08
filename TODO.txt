@@ -1,4 +1,0 @@
-1. Fix: the scoring is not being done relative to the mission bounderies - i think its done
-
-3. Check default behaviors, and making sure they are exist if they are needed according to the assignment
-4.Does the algorithm stops on its own without maxsteps - it does

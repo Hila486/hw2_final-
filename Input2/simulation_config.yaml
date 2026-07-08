@@ -1,0 +1,8 @@
+simulation_config:
+  map_filename: map.npy
+  map_resolution_cm: 10
+  initial_drone_position:
+    x_cm: 5
+    y_cm: 45
+    height_cm: 25
+  initial_angle_deg: 0

@@ -47,13 +47,9 @@ target_link_libraries(drone_mapper
 
 add_executable(drone_mapper_simulation src/drone_mapper_simulation_main.cpp)
 target_link_libraries(drone_mapper_simulation PRIVATE drone_mapper)
-#Compile the maps_comparison util
+# Compile the maps_comparison util
 add_executable(maps_comparison src/maps_comparison_main.cpp)
 target_link_libraries(maps_comparison PRIVATE drone_mapper)
-
-# Compile the yaml example file
-add_executable(example_yml cpp_yaml_example/main.cpp)
-target_link_libraries(example_yml PRIVATE yaml-cpp::yaml-cpp)
 
 # ---------------------------------------------------------------------------
 # Tests: component tests (tests/components) + integration tests (tests/integration).
@@ -73,6 +69,7 @@ add_executable(drone_mapper_simulation_test
     tests/components/MapsComparisonTests.cpp
     tests/integration/IntegrationTests.cpp
     tests/components/ConfigParserTests.cpp
+    tests/components/ScanResultToVoxelsTests.cpp
 )
 target_include_directories(drone_mapper_simulation_test
     PRIVATE

@@ -106,6 +106,32 @@ TEST(MockLidar, DetectsObstacleStraightAhead) {
     EXPECT_NEAR(distance_cm, 45.0, 1.5);
 }
 
+TEST(MockLidar, DetectsObstacleNearEndOfScanRange) {
+    const std::vector<double> z_max_configs = {60.0, 90.0, 120.0};
+    
+    for (double z_max : z_max_configs) {
+        std::size_t dynamic_width = static_cast<std::size_t>(std::ceil(z_max / kRes)) + 2;
+        auto array = makeMapArray(kDepth, kHeight, dynamic_width, 0);
+
+        double obstacle_x_cm = z_max - 5.0; 
+        std::size_t obs_index = static_cast<std::size_t>(std::floor(obstacle_x_cm / kRes));
+        setVoxelRaw(*array, kHeight, dynamic_width, 0, 0, obs_index, 1);
+
+        Map3DImpl map(std::move(array), fullConfig(kDepth, kHeight, dynamic_width, kRes));
+        MockGPS gps(P(5, 5, 5), heading(0), L(kRes));
+        MockLidar lidar(makeLidar(20.0, z_max, 2.5, 1), map, gps);
+
+        const types::LidarScanResult result = lidar.scan(heading(0));
+        ASSERT_EQ(result.size(), 1u);
+        
+        double expected_distance_cm = (static_cast<double>(obs_index) * kRes) - 5.0;
+        const double distance_cm = cm_of(result.front().distance);
+
+        EXPECT_LT(distance_cm, std::numeric_limits<double>::max());
+        EXPECT_NEAR(distance_cm, expected_distance_cm, 1.5);
+    }
+}
+
 TEST(MockLidar, ObstacleBehindIsNotSeenWhenFacingAway) {
     auto map = makeCorridor(/*occupied_at_index_five=*/true);
     // Face west (+180deg) so the obstacle at +x is behind the drone.
